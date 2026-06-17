@@ -1,0 +1,83 @@
+services:
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    image: paperbee
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: python run_fastapi.py
+    depends_on:
+      - redis
+
+  mcq_worker:
+    image: paperbee
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: celery -A apps.papers.tasks worker -Q mcq_queue --loglevel=info --concurrency=3 --max-memory-per-child=300000 --prefetch-multiplier=1
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+    depends_on:
+      - redis
+
+  image_worker:
+    image: paperbee
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: celery -A apps.papers.tasks worker -Q image_queue --loglevel=info --concurrency=2 --max-memory-per-child=600000 --prefetch-multiplier=1
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    depends_on:
+      - redis
+
+  answer_worker:
+    image: paperbee
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: celery -A apps.papers.tasks worker -Q answer_queue --loglevel=info --concurrency=3 --max-memory-per-child=400000 --prefetch-multiplier=1
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+    depends_on:
+      - redis

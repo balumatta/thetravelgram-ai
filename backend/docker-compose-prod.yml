@@ -1,0 +1,102 @@
+services:
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  api:
+    image: ${ACR_REGISTRY:-paperbee.azurecr.io}/${IMAGE_NAME:-paperbee}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: python run_fastapi.py
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+
+  mcq_worker:
+    image: ${ACR_REGISTRY:-paperbee.azurecr.io}/${IMAGE_NAME:-paperbee}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: celery -A apps.papers.tasks worker -Q mcq_queue --loglevel=info --concurrency=3 --max-memory-per-child=300000 --prefetch-multiplier=1
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+    depends_on:
+      - redis
+
+  image_worker:
+    image: ${ACR_REGISTRY:-paperbee.azurecr.io}/${IMAGE_NAME:-paperbee}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: celery -A apps.papers.tasks worker -Q image_queue --loglevel=info --concurrency=2 --max-memory-per-child=600000 --prefetch-multiplier=1
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    depends_on:
+      - redis
+
+  answer_worker:
+    image: ${ACR_REGISTRY:-paperbee.azurecr.io}/${IMAGE_NAME:-paperbee}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=prod
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MAX_CONCURRENT_BATCHES=3
+      - PERFORMANCE_MODE=True
+    command: celery -A apps.papers.tasks worker -Q answer_queue --loglevel=info --concurrency=3 --max-memory-per-child=400000 --prefetch-multiplier=1
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+    depends_on:
+      - redis
+
+#  nginx:
+#    image: nginx:alpine
+#    restart: unless-stopped
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+#      - /etc/letsencrypt:/etc/letsencrypt:ro
+#    depends_on:
+#      - api

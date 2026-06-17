@@ -1,0 +1,9 @@
+# Log files - exclude all logs from git tracking
+*.log
+*.log.*
+*.txt
+*.out
+
+# All files and folders in the log directory
+*
+!.gitignore
