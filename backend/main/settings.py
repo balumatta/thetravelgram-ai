@@ -94,3 +94,15 @@ EMAIL_CREDS = configurations.get("email_credentials", {})
 ################################################################################################
 FRONTEND_URLS = configurations.get("frontend_urls", {})
 FRONTEND_LOGIN_URL = FRONTEND_URLS.get("login_url", "http://localhost:5173")
+
+################################################################################################
+# STT Model
+################################################################################################
+
+STT_PROVIDER_TYPE = "faster_whisper"
+
+from backend.helpers.stt.stt_provider import STTProviderFactory
+
+STT_MODEL = STTProviderFactory.create_provider(
+    provider_type=STT_PROVIDER_TYPE,
+)
