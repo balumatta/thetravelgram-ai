@@ -79,6 +79,13 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 
 ################################################################################################
+# WIX DETAILS
+################################################################################################
+WIX_API_KEY = os.getenv("WIX_API_KEY", "").strip()
+WIX_SITE_ID = os.getenv("WIX_SITE_ID", "").strip()
+WIX_ACCOUNT_ID = os.getenv("WIX_ACCOUNT_ID", "").strip()
+
+################################################################################################
 # REDIS DETAILS
 ################################################################################################
 REDIS_DETAILS = configurations["redis"]
