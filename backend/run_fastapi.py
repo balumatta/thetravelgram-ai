@@ -21,9 +21,9 @@ app = FastAPI()
 # Add authentication middleware
 # auth_backend = AuthBackend(URLS_TO_BE_IGNORED_FOR_AUTH)
 # app.add_middleware(AuthenticationMiddleware, backend=auth_backend, on_error=auth_error_handler)
-# app.add_middleware(
-#     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
-# )
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+)
 
 # Add all routers from apps
 UrlRouter(app).add_router_from_apps()

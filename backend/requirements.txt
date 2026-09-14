@@ -24,3 +24,5 @@ soundfile
 sounddevice
 faster_whisper
 assemblyai
+anthropic
+sse-starlette
