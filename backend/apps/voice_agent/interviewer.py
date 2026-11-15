@@ -84,7 +84,10 @@ class Interviewer:
             f"output: {usage.output_tokens}"
         )
 
-        raw = response.content[0].text.strip()
+        text_block = next((b for b in response.content if b.type == "text"), None)
+        if not text_block:
+            raise ValueError("No text block in interviewer response")
+        raw = text_block.text.strip()
         logger.debug(f"Interviewer raw: {raw}")
 
         try:

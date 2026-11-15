@@ -2,8 +2,6 @@ import os
 
 from dotenv import load_dotenv
 
-from helpers.database_helpers.db_interfaces import DatabaseConnector
-from helpers.database_helpers.rds.database import PostgresDatabaseConnection
 from main.config import Environments, get_configurations
 
 BASE_DIR = os.path.dirname((os.path.dirname(__file__)))
@@ -38,10 +36,8 @@ configurations = get_configurations(current_env)
 ################################################################################################
 # RDS DATABASE DETAILS
 ################################################################################################
-RDS_DETAILS = configurations["rds_database_details"]
-print("Establishing RDS DB connection........")
-db_connection: DatabaseConnector = PostgresDatabaseConnection(RDS_DETAILS)
-print("RDS DB connection established!!!!")
+RDS_DETAILS = configurations.get("rds_database_details", {})
+# db_connection: DatabaseConnector = PostgresDatabaseConnection(RDS_DETAILS)
 ################################################################################################
 
 ################################################################################################
@@ -108,8 +104,4 @@ FRONTEND_LOGIN_URL = FRONTEND_URLS.get("login_url", "http://localhost:5173")
 
 STT_PROVIDER_TYPE = "faster_whisper"
 
-from backend.helpers.stt.stt_provider import STTProviderFactory
-
-STT_MODEL = STTProviderFactory.create_provider(
-    provider_type=STT_PROVIDER_TYPE,
-)
+# STT_MODEL = STTProviderFactory.create_provider(provider_type=STT_PROVIDER_TYPE)

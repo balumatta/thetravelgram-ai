@@ -76,10 +76,9 @@ BLOG STYLE DNA — study these patterns carefully. Your questions must pull out 
     • "Delicious rice, rasam and payasam at 9100 feet. Kudos to the cook."
     → Ask: What did you eat that day? Anything that surprised you or tasted better/worse than expected?
 
-11. ENDING STRUCTURE — always these four sections in this order:
-    ## Itinerary  (City → City → City route)
-    ## Must Visit  (honest bulleted list — what to see AND what to skip)
-    ## Tips  (practical, specific, sometimes "do NOT do X")
+11. ENDING STRUCTURE — always these three sections in this order:
+    ## Itinerary  (visual flowchart: 📍 City → ✈️/🚗 transport (~Xh) → 📍 City, full route)
+    ## Tips  (practical, specific, opinionated — sometimes "do NOT do X", can be funny)
     ## Special Thanks  (name + context for every companion, e.g. "Rinku Katta (co-traveler, founder)")
 
 ════════════════════════════════════════════════════════════════
@@ -157,9 +156,8 @@ Once you have those, signal {next_signal}."""
 
 WRAPUP_CONTEXT = """All {total_days} days are covered. Now collect the wrap-up:
 - The single best moment of the entire trip
-- What they'd tell a friend NOT to do (practical tip)
-- Must-visit vs overrated — honest take
-- Itinerary route summary (just City → City → City path)
+- 2-3 practical tips — what to do AND what NOT to do (specific, honest, can be funny)
+- The full route summary: departure city → each stop → return city, with transport and rough durations
 Once you have these, signal GENERATE."""
 
 
@@ -225,13 +223,72 @@ The panoramic view of the mighty mountains under the illuminated sky from our te
 10. Specific numbers: prices, temperatures, distances, altitudes, hours driven
 11. Profanity when natural: shit, wtf, bloody hell — never sanitized
 12. Honest reactions: fear before adventure, disappointment at overhyped places, genuine awe
-13. End with EXACTLY these four sections:
-    ## Itinerary
-    ## Must Visit
-    ## Tips
+13. End with EXACTLY these three sections:
+    ## Itinerary  (visual flowchart: 📍 Place → ✈️/🚗/🏍️ Transport (~Xh) → 📍 Place, one leg per line)
+    ## Tips  (practical, honest, opinionated — "do NOT do X" is encouraged)
     ## Special Thanks  (Name, relationship — e.g. "Rinku Katta (co-traveler, founder)")
 
 === INTERVIEW TRANSCRIPT ===
 {transcript}
 
-Write the complete blog post now. Start with a compelling in-scene opening line. Do NOT write the title."""
+You will write the blog post section by section. Each message will tell you exactly which section to write next and show you everything written so far for consistency. Do NOT write the title."""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION INSTRUCTIONS — user messages for each sequential section call
+# ─────────────────────────────────────────────────────────────────────────────
+
+SECTION_OPENING = """Write the opening scene and Day 1 section only.
+Start mid-scene or mid-conversation — never "We went to X". End after Day 1 is complete.
+Do not write any other days or the closing sections yet."""
+
+SECTION_DAY = """Here is everything written so far:
+
+{written_so_far}
+
+---
+Continue with Day {day_num} section only.
+Keep all names, nicknames, running jokes, and voice 100% consistent with what's already written.
+End after Day {day_num} is complete. Do not write any other days or closing sections yet."""
+
+REFORMAT_BLOG_SYSTEM_PROMPT = """You are restructuring an existing travel blog into a typed JSON format.
+
+CRITICAL RULES — do not skip any:
+1. Keep EVERY SINGLE PARAGRAPH. Zero content may be lost. Every story beat, every anecdote, every sentence must appear in the output.
+2. Do NOT summarise, rewrite, or condense anything. Copy the text verbatim into paragraph blocks.
+3. Any quoted speech / real dialogue → conversation block. Merge consecutive exchanges into ONE conversation block.
+4. Facts, interesting asides, observations → fact block
+5. Day headers (Day 1, Day 2 etc.) → day_header block
+6. Final itinerary section → ONE itinerary block: `stops` = ordered list of place names ONLY (no days, no transport, no descriptions, no arrows)
+7. Must Visit recommendations → must_visit block
+8. Tips → tips block — each tip must be ONE sentence max
+9. Special Thanks → thanks block
+10. Closing / sign-off paragraph → closing block
+11. EVERYTHING ELSE goes into paragraph blocks — do not skip any text
+12. Create a catchy title and short subtitle
+
+If the blog is long, include every paragraph. The output will be a long JSON with many sections — that is correct."""
+
+
+SECTION_WRAPUP = """Here is everything written so far:
+
+{written_so_far}
+
+---
+Now write the final three closing sections only, in this exact order:
+
+## Itinerary
+Write this as a visual route flowchart using arrows. Each step = one line:
+📍 City/Place → ✈️/🚗/🏍️ Transport (~Xh) → 📍 Next City/Place
+Show the full route from departure to return. Include transport mode and rough duration for each leg.
+Example format:
+📍 Bangalore → ✈️ Flight (2h) → 📍 Leh
+📍 Leh → 🚗 Road (3h) → 📍 Nubra Valley
+📍 Nubra Valley → 🚗 Road (5h) → 📍 Pangong Lake
+
+## Tips
+Practical, specific, honest. Include what NOT to do. Can be opinionated and funny.
+
+## Special Thanks
+Name + relationship for every companion. E.g. "Rinku Katta (co-traveler, the one who actually planned everything)"
+
+Base all sections on the full interview transcript. Keep the same voice and tone as the rest of the blog."""

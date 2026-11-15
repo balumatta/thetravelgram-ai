@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"components/BlogPreview.tsx -> ./composer/Composer\":{\"id\":\"components/BlogPreview.tsx -> ./composer/Composer\",\"files\":[\"static/css/_app-pages-browser_src_components_composer_Composer_tsx.css\",\"static/chunks/_app-pages-browser_src_components_composer_Composer_tsx.js\"]}}"

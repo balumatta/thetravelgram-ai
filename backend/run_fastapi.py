@@ -6,13 +6,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 import psutil
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.authentication import AuthenticationMiddleware
+# from starlette.middleware.authentication import AuthenticationMiddleware
 # from starlette.staticfiles import StaticFiles
 
 from main.config import Environments
 from main.settings import URLS_TO_BE_IGNORED_FOR_AUTH, current_env
 from main.urls import UrlRouter
-from middlewares.authentication import AuthBackend, auth_error_handler
+# from middlewares.authentication import AuthBackend, auth_error_handler
 
 # Create the FastAPI application
 app = FastAPI()
