@@ -1,0 +1,39 @@
+/* ── Site moods — public pages only (home, gallery, blog): Day Trip (default) and Night Drive.
+   Toggle in the header, top right.
+   Every public colour/font comes from these tokens; story.css maps them onto the blog page. ── */
+
+/* Day Trip (default): warm paper, rust, classic serif */
+.site {
+  --t-bg: #F6F4F1; --t-paper: #FFFFFF; --t-ink: #1C1819; --t-muted: #6E6763; --t-faint: #A49D97;
+  --t-line: #E3DED8; --t-soft: #FAF8F5; --t-soft-line: #ECE4D8; --t-card: #FBF7F0; --t-convo: #F7F2EC;
+  --t-accent: #B84C3D; --t-on-accent: #FFFFFF; --t-accent-2: #D9A441;
+  --t-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --t-body: var(--font-lora), Lora, Georgia, serif;
+  --t-ui: var(--font-inter), Inter, system-ui, sans-serif;
+  --t-display-style: italic; --t-display-weight: 600; --t-display-scale: 1.12;
+  --t-radius: 18px; --t-radius-sm: 12px;
+  --t-shadow: 0 18px 40px -26px rgba(28, 24, 25, .45);
+  --t-hero-glow: radial-gradient(60% 60% at 80% 10%, rgba(217, 164, 65, .18), transparent 70%);
+  color-scheme: light;
+}
+
+/* Night Drive: dark road, warm amber headlights */
+html[data-site-theme="night"] .site {
+  --t-bg: #131211; --t-paper: #1C1A18; --t-ink: #F1EBE3; --t-muted: #B5ABA1; --t-faint: #7F766E;
+  --t-line: #2F2B28; --t-soft: #211F1C; --t-soft-line: #35312D; --t-card: #23201D; --t-convo: #241F1B;
+  --t-accent: #F0A64A; --t-on-accent: #1A140E; --t-accent-2: #E0604C;
+  --t-display: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --t-display-style: italic; --t-display-weight: 600; --t-display-scale: .96;
+  --t-radius: 16px; --t-radius-sm: 10px;
+  --t-shadow: 0 22px 44px -24px rgba(0, 0, 0, .8);
+  --t-hero-glow: radial-gradient(50% 55% at 80% 5%, rgba(240, 166, 74, .16), transparent 70%);
+  color-scheme: dark;
+}
+
+html[data-site-theme="night"] .site .tg-story-scope {
+  --ink-red: #FF8A80; --ink-green: #7FD6A0; --ink-blue: #8DB8FF; --ink-purple: #D1A3FF; --ink-orange: #FFB067;
+  --mark-yellow: #5C4A0E; --mark-green: #1F4A2E; --mark-blue: #1D3557; --mark-pink: #5A2338;
+}
+
+
+.site { background: var(--t-bg); color: var(--t-ink); min-height: 100vh; font-family: var(--t-ui); }

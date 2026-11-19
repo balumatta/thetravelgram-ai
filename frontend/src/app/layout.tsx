@@ -13,15 +13,24 @@ const cormorant = Cormorant_Garamond({
 });
 
 const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat", weight: ["500", "600"] });
+// Applies a saved Night Drive choice before first paint, so there's no flash of Day Trip.
+const themeScript = `try{if(localStorage.getItem("ttg-site-theme")==="night")document.documentElement.setAttribute("data-site-theme","night")}catch(e){}`;
 
 export const metadata: Metadata = {
-  title: "TheTravelGram",
-  description: "Turn your travel memories into a blog post",
+  title: "The Travel Gram · Memories that do not fade away",
+  description: "Travel stories by Balu Matta: memories that do not fade away.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${lora.variable} ${cormorant.variable} ${caveat.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${playfair.variable} ${lora.variable} ${cormorant.variable} ${caveat.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

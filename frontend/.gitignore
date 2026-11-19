@@ -28,3 +28,7 @@ dist-ssr
 out/
 *.tsbuildinfo
 next-env.d.ts
+
+# Written by the Amplify build from console env vars (contains secrets)
+.env.production
+.env*.local

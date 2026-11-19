@@ -196,3 +196,61 @@ textarea.cmp-field { overflow: hidden; }
   .cmp-sec-menu, .cmp-bubble-inner { animation: cmpPop .12s ease-out; }
 }
 @keyframes cmpPop { from { opacity: 0; transform: translateY(4px); } }
+
+/* Photo/video toolbar (hover, selection, or always on touch screens) */
+.cmp-story figure { position: relative; }
+.cmp-fig-bar {
+  position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; align-items: center; gap: 2px; padding: 3px;
+  background: var(--c-chrome); border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,.25);
+  opacity: 0; transform: translateY(-4px); transition: opacity .15s, transform .15s; pointer-events: none;
+}
+.cmp-story figure:hover .cmp-fig-bar, .cmp-story figure.ProseMirror-selectednode .cmp-fig-bar, .cmp-fig-bar:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+.cmp-fig-bar button { border: 0; background: none; color: var(--c-chrome-ink); font: 600 12px var(--f-ui); height: 28px; padding: 0 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.cmp-fig-bar button:hover { background: rgba(255,255,255,.12); }
+.cmp-fig-bar button.is-on { background: rgba(255,255,255,.18); color: #fff; }
+.cmp-fig-bar button.is-danger { color: #FFB4A6; }
+.cmp-fig-bar button.is-danger:hover { background: rgba(255, 120, 100, .2); color: #fff; }
+.cmp-fig-sep { width: 1px; height: 16px; background: rgba(255,255,255,.2); margin: 0 3px; }
+@media (hover: none) { .cmp-fig-bar { opacity: 1; transform: none; pointer-events: auto; } }
+
+/* Font size, text colour and highlight controls */
+.cmp-size-select { width: 92px; }
+.cmp-a { display: inline-grid; justify-items: center; font: 700 15px/1 var(--f-ui); }
+.cmp-a i { display: block; width: 16px; height: 3px; border-radius: 2px; margin-top: 2px; }
+.cmp-mark-ic { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; }
+.cmp-mark-ic svg { width: 17px; height: 17px; }
+.cmp-swatches {
+  position: fixed; z-index: 60; display: flex; gap: 6px; padding: 8px; background: var(--c-paper);
+  border: 1px solid var(--c-line); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,.16); max-width: 240px; flex-wrap: wrap;
+}
+.cmp-swatch {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--c-line); background: var(--c-paper); cursor: pointer;
+  font: 700 15px/1 var(--f-ui); display: grid; place-items: center; color: var(--c-ink);
+}
+.cmp-swatch:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.12); }
+.cmp-swatch[aria-checked="true"] { outline: 2px solid var(--c-ui); outline-offset: 1px; }
+.cmp-swatch.is-none { position: relative; color: var(--c-faint); }
+.cmp-swatch.is-mark.is-none::after { content: ""; position: absolute; inset: 6px; border-top: 2px solid var(--c-faint); transform: rotate(-45deg) translateY(6px); }
+
+/* Gallery block in the editor */
+.cmp-gal { margin: 1.6rem 0; padding: 12px; border: 1.5px dashed var(--c-line); border-radius: 14px; background: var(--c-paper); font-family: var(--f-ui); }
+.cmp-gal.ProseMirror-selectednode { border-color: var(--c-ui); box-shadow: 0 0 0 3px var(--c-ui-soft); }
+.cmp-gal-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font: 600 12.5px var(--f-ui); color: var(--c-muted); }
+.cmp-gal-head span { margin-right: auto; }
+.cmp-gal-head button { border: 1px solid var(--c-line); background: var(--c-paper); color: var(--c-ink); font: 600 12px var(--f-ui); padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+.cmp-gal-head button.is-add { background: var(--c-ui); border-color: var(--c-ui); color: #fff; }
+.cmp-gal-head button.is-danger { color: var(--c-danger); }
+.cmp-gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; }
+.cmp-gal-tile { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--c-line-soft); }
+.cmp-gal-tile img { width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; border-radius: 0; max-width: none; }
+.cmp-gal-tile.is-pending { display: grid; place-items: center; font-size: 11.5px; color: var(--c-muted); animation: cmpPulse 1.2s ease-in-out infinite; }
+@keyframes cmpPulse { 50% { opacity: .5; } }
+.cmp-gal-n { position: absolute; left: 6px; top: 6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; font: 700 11px/20px var(--f-ui); text-align: center; }
+.cmp-gal-ops { position: absolute; right: 4px; bottom: 4px; display: flex; gap: 3px; opacity: 0; transition: opacity .15s; }
+.cmp-gal-tile:hover .cmp-gal-ops, .cmp-gal-ops:focus-within { opacity: 1; }
+.cmp-gal-ops button { width: 26px; height: 26px; border: 0; border-radius: 7px; background: rgba(20,18,17,.82); color: #fff; font: 600 13px/1 var(--f-ui); cursor: pointer; }
+.cmp-gal-ops button.is-danger:hover { background: var(--c-danger); }
+.cmp-gal-plus { aspect-ratio: 1; border: 1.5px dashed var(--c-line); border-radius: 8px; background: none; color: var(--c-muted); font: 300 34px/1 var(--f-ui); cursor: pointer; }
+.cmp-gal-plus:hover { border-color: var(--c-ui); color: var(--c-ui); background: var(--c-ui-soft); }
+.cmp-gal-hint { margin: 8px 2px 0; font-size: 11.5px; color: var(--c-faint); }
+@media (hover: none) { .cmp-gal-ops { opacity: 1; } }

@@ -4,7 +4,7 @@ import { escapeHtml } from "./inlineHtml";
 
 // ── End-of-blog sections ─────────────────────────────────────
 
-export type SectionKind = "itinerary" | "must_visit" | "tips" | "thanks";
+export type SectionKind = "itinerary" | "must_visit" | "tips" | "travellers" | "thanks";
 export type Row = Record<string, string>;
 export interface EndSection {
   id: number;
@@ -37,16 +37,26 @@ export const SECTION_TYPES: Record<
     add: "tip",
     fields: [{ key: "text", label: "Tip", multiline: true }],
   },
+  travellers: {
+    title: "Travellers",
+    hint: "Who you travelled with: photo, name and title",
+    cols: "1fr 1fr",
+    add: "traveller",
+    photo: true,
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "role", label: "Title, e.g. Wife & co-traveller" },
+    ],
+  },
   thanks: {
     title: "Special Thanks",
-    hint: "The people who made the trip. Each one gets a postcard",
+    hint: "The people who made the trip: photo, name and title",
     cols: "1fr 1fr",
     add: "person",
     photo: true,
     fields: [
       { key: "name", label: "Name" },
       { key: "role", label: "Role, e.g. Local guide" },
-      { key: "note", label: "Your note to them", multiline: true },
     ],
   },
 };
@@ -76,8 +86,9 @@ export function toEndSections(sections: BlogSection[] | null | undefined): EndSe
         rows = (s.items ?? []).map((text) => ({ text }));
         break;
       case "thanks":
-        kind = "thanks";
-        rows = (s.people ?? []).map((p) => ({ name: p.name, role: p.role ?? "", note: p.note, image_url: p.image_url ?? "" }));
+      case "travellers":
+        kind = s.type;
+        rows = (s.people ?? []).map((p) => ({ name: p.name, role: p.role ?? "", image_url: p.image_url ?? "" }));
         break;
     }
     if (kind && !out.some((x) => x.kind === kind)) out.push({ id: newSectionId(), kind, rows: rows.length ? rows : [{}] });
@@ -102,9 +113,10 @@ export function fromEndSections(list: EndSection[]): BlogSection[] {
         out.push({ type: "tips", items: rows.map((r) => (r.text ?? "").trim()) });
         break;
       case "thanks":
+      case "travellers":
         out.push({
-          type: "thanks",
-          people: rows.map((r) => ({ name: r.name ?? "", role: r.role ?? "", note: r.note ?? "", image_url: r.image_url ?? "" })),
+          type: s.kind,
+          people: rows.map((r) => ({ name: r.name ?? "", role: r.role ?? "", image_url: r.image_url ?? "" })),
         });
         break;
     }

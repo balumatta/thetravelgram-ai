@@ -273,7 +273,6 @@ function ThanksForm({ section, onSave, onCancel }: { section: BlogSection; onSav
           <div className="sep-thanks-fields">
             <input className="sep-input" value={p.name} onChange={(e) => update(i, "name", e.target.value)} placeholder="Full name" />
             <input className="sep-input" value={p.role} onChange={(e) => update(i, "role", e.target.value)} placeholder="Role e.g. Wife & co-traveler" />
-            <input className="sep-input" value={p.note} onChange={(e) => update(i, "note", e.target.value)} placeholder="One warm line about them" />
           </div>
           <button className="sep-icon-btn sep-del-btn" onClick={() => setPeople(people.filter((_, j) => j !== i))}>✕</button>
         </div>

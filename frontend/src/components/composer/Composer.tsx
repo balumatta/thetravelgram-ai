@@ -4,6 +4,7 @@ import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/r
 import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { BackgroundColor, Color, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { NodeSelection } from "@tiptap/pm/state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogSection } from "../BlogRenderer";
@@ -11,6 +12,7 @@ import AutoTextarea from "./AutoTextarea";
 import { fromEndSections, type EndSection } from "./convert";
 import EndSections from "./EndSections";
 import { Figure, StyledParagraph } from "./extensions";
+import { Gallery, pickImages, uploadImages } from "./gallery";
 import RichBlogView from "./RichBlogView";
 import "./story.css";
 import "./composer.css";
@@ -25,6 +27,8 @@ export interface ComposerSaved {
 
 interface Props {
   blogId?: string;
+  /** Where Save sends the blog (PUT). Defaults to the draft. */
+  saveUrl?: string;
   initialTitle: string;
   initialSubtitle: string;
   initialBanner: string;
@@ -36,6 +40,31 @@ interface Props {
 
 type Style = "p" | "h2" | "h3" | "convo" | "fact" | "quote";
 type SaveState = "clean" | "dirty" | "saving" | "saved" | "error";
+
+// Colours are stored as CSS variables (see story.css) so each site theme can tune them.
+const TEXT_COLORS: Array<[string, string | null]> = [
+  ["Default", null],
+  ["Accent", "var(--s-accent)"],
+  ["Muted", "var(--s-muted)"],
+  ["Red", "var(--ink-red)"],
+  ["Orange", "var(--ink-orange)"],
+  ["Green", "var(--ink-green)"],
+  ["Blue", "var(--ink-blue)"],
+  ["Purple", "var(--ink-purple)"],
+];
+const HIGHLIGHTS: Array<[string, string | null]> = [
+  ["None", null],
+  ["Yellow", "var(--mark-yellow)"],
+  ["Green", "var(--mark-green)"],
+  ["Blue", "var(--mark-blue)"],
+  ["Pink", "var(--mark-pink)"],
+];
+const FONT_SIZES: Array<[string, string | null]> = [
+  ["Small", "0.875em"],
+  ["Normal", null],
+  ["Large", "1.25em"],
+  ["Huge", "1.6em"],
+];
 
 const STYLE_LABELS: Array<[Style, string]> = [
   ["p", "Paragraph"],
@@ -95,13 +124,90 @@ const Icon = {
   numbers: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 6h10M10 12h10M10 18h10" /><path d="M4 4v4M3 18h3l-3 2h3" /></svg>,
   image: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="m21 16-5-5-9 9" /></svg>,
   video: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><rect x="3" y="5" width="13" height="14" rx="2" /><path d="m16 10 5-3v10l-5-3z" /></svg>,
+  gallery: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></svg>,
+  marker: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 11-5 5v3h3l5-5M9 11l6-6 4 4-6 6M9 11l4 4" /></svg>,
   divider: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12h16" /></svg>,
 };
 
 // ── Composer ─────────────────────────────────────────────────
 
+/** Toolbar button that opens a row of colour swatches (text colour or highlight). */
+function SwatchMenu({
+  title,
+  icon,
+  options,
+  current,
+  kind,
+  onPick,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  options: Array<[string, string | null]>;
+  current: string | null;
+  kind: "text" | "mark";
+  onPick: (value: string | null) => void;
+}) {
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pos) return;
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.key !== "Escape") return;
+      if (e instanceof PointerEvent && (menu.current?.contains(e.target as Node) || btn.current?.contains(e.target as Node))) return;
+      setPos(null);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [pos]);
+
+  const toggle = () => {
+    if (pos) return setPos(null);
+    const r = btn.current!.getBoundingClientRect();
+    setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - 248)), top: r.bottom + 6 });
+  };
+
+  return (
+    <>
+      <button ref={btn} type="button" className={`cmp-tb ${current ? "is-on" : ""}`} title={title} aria-label={title} aria-expanded={!!pos} onClick={toggle}>
+        {icon}
+      </button>
+      {pos && (
+        <div ref={menu} className="cmp-swatches" role="menu" aria-label={title} style={{ left: pos.left, top: pos.top }}>
+          {options.map(([label, value]) => (
+            <button
+              key={label}
+              type="button"
+              role="menuitemradio"
+              aria-checked={current === value}
+              title={label}
+              aria-label={label}
+              className={`cmp-swatch is-${kind} ${value ? "" : "is-none"}`}
+              style={value ? (kind === "text" ? { color: value } : { background: value }) : undefined}
+              onClick={() => {
+                onPick(value);
+                setPos(null);
+              }}
+            >
+              {kind === "text" ? "A" : ""}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function Composer({
   blogId,
+  saveUrl = "/api/voice-agent/blog",
   initialTitle,
   initialSubtitle,
   initialBanner,
@@ -177,6 +283,26 @@ export default function Composer({
   );
   const insertMediaRef = useRef(insertMedia);
   insertMediaRef.current = insertMedia;
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
+
+  /** Pick several photos, upload them, and insert one gallery block after the current block. */
+  const addGallery = useCallback(() => {
+    pickImages(async (files) => {
+      const ed = editorRef.current;
+      if (!ed) return;
+      setUploading((n) => n + files.length);
+      try {
+        const images = await uploadImages(files, (f) => uploadRef.current(f), (m) => showToastRef.current(m));
+        if (!images.length) return;
+        const { $from } = ed.state.selection;
+        const at = Math.min($from.depth >= 1 ? $from.after(1) : ed.state.doc.content.size, ed.state.doc.content.size);
+        ed.view.dispatch(ed.state.tr.insert(at, ed.schema.nodes.gallery.create({ images })));
+      } finally {
+        setUploading((n) => n - files.length);
+      }
+    });
+  }, []);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -189,6 +315,14 @@ export default function Composer({
       }),
       StyledParagraph,
       Figure,
+      Gallery.configure({
+        upload: (f: File) => uploadRef.current(f),
+        onError: (m: string) => showToastRef.current(m),
+      }),
+      TextStyle,
+      Color,
+      BackgroundColor,
+      FontSize,
       Placeholder.configure({
         placeholder: ({ node }) => (node.type.name === "figure" ? "Add a caption" : "Write your story…"),
         includeChildren: true,
@@ -230,6 +364,9 @@ export default function Composer({
             link: e.isActive("link"),
             bullets: e.isActive("bulletList"),
             numbers: e.isActive("orderedList"),
+            color: (e.getAttributes("textStyle").color as string | undefined) ?? null,
+            mark: (e.getAttributes("textStyle").backgroundColor as string | undefined) ?? null,
+            size: (e.getAttributes("textStyle").fontSize as string | undefined) ?? null,
             canUndo: e.can().undo(),
             canRedo: e.can().redo(),
           }
@@ -244,7 +381,7 @@ export default function Composer({
     setSave("saving");
     setSaveError("");
     try {
-      const res = await fetch("/api/voice-agent/blog", {
+      const res = await fetch(saveUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, subtitle, banner_url: banner, content: html, content_format: "rich", sections: sectionsOut }),
@@ -256,7 +393,7 @@ export default function Composer({
       setSave("error");
       setSaveError(err instanceof Error ? err.message : "Save failed");
     }
-  }, [editor, title, subtitle, banner, sectionsOut, onSaved]);
+  }, [editor, title, subtitle, banner, sectionsOut, onSaved, saveUrl]);
 
   // ⌘/Ctrl+S saves; the browser warns before leaving with unsaved changes.
   useEffect(() => {
@@ -383,12 +520,43 @@ export default function Composer({
             <Btn title="Strikethrough" on={ui.strike} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></Btn>
             <Btn title="Link" on={ui.link} onClick={openLink}>{Icon.link}</Btn>
             <span className="cmp-tb-sep" />
+            <select
+              className="cmp-style-select cmp-size-select"
+              aria-label="Font size"
+              title="Font size"
+              value={ui.size ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                const c = editor.chain().focus();
+                (v ? c.setFontSize(v) : c.unsetFontSize()).run();
+              }}
+            >
+              {FONT_SIZES.map(([l, v]) => <option key={l} value={v ?? ""}>{l}</option>)}
+            </select>
+            <SwatchMenu
+              title="Text colour"
+              icon={<span className="cmp-a">A<i style={{ background: ui.color ?? "currentColor" }} /></span>}
+              options={TEXT_COLORS}
+              current={ui.color}
+              kind="text"
+              onPick={(v) => { const c = editor.chain().focus(); (v ? c.setColor(v) : c.unsetColor()).run(); }}
+            />
+            <SwatchMenu
+              title="Highlight"
+              icon={<span className="cmp-mark-ic" style={{ background: ui.mark ?? "transparent" }}>{Icon.marker}</span>}
+              options={HIGHLIGHTS}
+              current={ui.mark}
+              kind="mark"
+              onPick={(v) => { const c = editor.chain().focus(); (v ? c.setBackgroundColor(v) : c.unsetBackgroundColor()).run(); }}
+            />
+            <span className="cmp-tb-sep" />
             <button type="button" className={`cmp-tb cmp-chip ${ui.style === "convo" ? "is-on" : ""}`} aria-pressed={ui.style === "convo"} onClick={() => applyStyle(editor, ui.style === "convo" ? "p" : "convo")}>Conversation</button>
             <button type="button" className={`cmp-tb cmp-chip ${ui.style === "fact" ? "is-on" : ""}`} aria-pressed={ui.style === "fact"} onClick={() => applyStyle(editor, ui.style === "fact" ? "p" : "fact")}>Fact</button>
             <span className="cmp-tb-sep" />
             <Btn title="Bulleted list" on={ui.bullets} onClick={() => editor.chain().focus().toggleBulletList().run()}>{Icon.bullets}</Btn>
             <Btn title="Numbered list" on={ui.numbers} onClick={() => editor.chain().focus().toggleOrderedList().run()}>{Icon.numbers}</Btn>
             <Btn title="Add photo" onClick={() => pickMedia("image")}>{Icon.image}</Btn>
+            <Btn title="Add gallery (several photos)" onClick={addGallery}>{Icon.gallery}</Btn>
             <Btn title="Add video" onClick={() => pickMedia("video")}>{Icon.video}</Btn>
             <Btn title="Divider" onClick={() => editor.chain().focus().setHorizontalRule().run()}>{Icon.divider}</Btn>
             <span className="cmp-tb-sep" />
