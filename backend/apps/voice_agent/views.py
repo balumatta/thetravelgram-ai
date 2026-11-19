@@ -267,43 +267,38 @@ class VoiceAgentView:
         return EventSourceResponse(event_stream())
 
     async def upload_media(self, request: Request):
+        """All media goes to S3, in every environment: s3://$S3_BUCKET/media/<blog_id>/<uuid>.<ext>"""
         from fastapi.responses import JSONResponse
-        from fastapi import UploadFile
-        import shutil
+        import boto3
 
-        env = os.environ.get("ENVIRONMENT", "local")
         form = await request.form()
         file = form.get("file")
-        blog_id = form.get("blog_id", "general")
+        blog_id = str(form.get("blog_id") or "general")
 
         if not file:
             return JSONResponse({"error": "No file"}, status_code=400)
 
+        bucket = os.environ.get("S3_BUCKET")
+        region = os.environ.get("AWS_REGION", "ap-south-1")
+        if not bucket:
+            return JSONResponse({"error": "S3 not configured: set S3_BUCKET"}, status_code=500)
+
         ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bin"
         filename = f"{uuid.uuid4().hex}{ext}"
+        key = f"media/{blog_id}/{filename}"
 
-        if env == "production":
-            # S3 upload
-            try:
-                import boto3
-                s3 = boto3.client("s3")
-                bucket = os.environ.get("S3_BUCKET", "thetravelgram.in")
-                key = f"{blog_id}/{filename}"
-                s3.upload_fileobj(file.file, bucket, key, ExtraArgs={"ContentType": file.content_type or "application/octet-stream"})
-                region = os.environ.get("AWS_REGION", "ap-south-1")
-                url = f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
-                return {"url": url, "filename": filename}
-            except Exception as e:
-                logger.exception("S3 upload failed")
-                return JSONResponse({"error": str(e)}, status_code=500)
-        else:
-            # Local: save to frontend/public/media/[blog_id]/
-            media_dir = os.path.join(BASE_DIR, "..", "frontend", "public", "media", blog_id)
-            os.makedirs(media_dir, exist_ok=True)
-            dest = os.path.join(media_dir, filename)
-            with open(dest, "wb") as f:
-                shutil.copyfileobj(file.file, f)
-            return {"url": f"/media/{blog_id}/{filename}", "filename": filename}
+        try:
+            # Default credential chain: access keys from .env locally, the ECS task role when deployed.
+            s3 = boto3.client("s3", region_name=region)
+            s3.upload_fileobj(
+                file.file, bucket, key,
+                ExtraArgs={"ContentType": file.content_type or "application/octet-stream"},
+            )
+        except Exception as e:
+            logger.exception("S3 upload failed")
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+        return {"url": f"https://{bucket}.s3.{region}.amazonaws.com/{key}", "filename": filename}
 
     async def delete_blog(self, request: Request):
         deleted = BlogStore.delete()

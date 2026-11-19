@@ -6,7 +6,7 @@ import { sanitizeInlineHtml } from "./composer/inlineHtml";
 export interface BlogSection {
   type:
     | "paragraph" | "conversation" | "fact" | "day_header" | "itinerary"
-    | "must_visit" | "tips" | "thanks" | "closing" | "image" | "video";
+    | "must_visit" | "tips" | "thanks" | "travellers" | "closing" | "image" | "video";
   text?: string;
   /** Inline rich text (strong/em/u/s/code/a/br) for paragraph & fact. Falls back to `text`. */
   html?: string;
@@ -17,7 +17,7 @@ export interface BlogSection {
   stops?: string[];
   places?: Array<{ name: string; why: string; emoji: string }>;
   items?: string[];
-  people?: Array<{ name: string; role: string; note: string; image_url?: string }>;
+  people?: Array<{ name: string; role: string; note?: string; image_url?: string }>;
   /** image / video blocks */
   src?: string;
   caption?: string;
@@ -182,7 +182,7 @@ function TipsBlock({ items }: { items: string[] }) {
   );
 }
 
-function ThanksBlock({ people }: { people: Array<{ name: string; role: string; note: string; image_url?: string }> }) {
+function ThanksBlock({ people }: { people: Array<{ name: string; role: string; note?: string; image_url?: string }> }) {
   return (
     <div className="br-thanks-wrap">
       <h3 className="br-section-heading">Special Thanks</h3>
@@ -200,7 +200,7 @@ function ThanksBlock({ people }: { people: Array<{ name: string; role: string; n
               )}
               <p className="br-thanks-name">{person.name}</p>
               <p className="br-thanks-role">{person.role}</p>
-              <p className="br-thanks-note">{person.note}</p>
+              {person.note && <p className="br-thanks-note">{person.note}</p>}
             </div>
           );
         })}

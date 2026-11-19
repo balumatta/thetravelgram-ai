@@ -1,0 +1,26 @@
+# AWS Amplify Hosting build for the Next.js site in frontend/ (monorepo).
+# Console settings: app root = frontend; environment variables ADMIN_PASSWORD, ADMIN_SECRET
+# (same values as frontend/.env) and, once the backend is live, BACKEND_URL.
+version: 1
+applications:
+  - appRoot: frontend
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm install 20 && nvm use 20
+            - npm ci
+        build:
+          commands:
+            # Amplify doesn't pass console env vars to Next.js server code at runtime;
+            # writing them to .env.production makes them available to middleware and API routes.
+            - env | grep -E '^(ADMIN_PASSWORD|ADMIN_SECRET|BACKEND_URL)=' >> .env.production || true
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - .next/cache/**/*
+          - node_modules/**/*

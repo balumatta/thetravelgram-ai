@@ -145,11 +145,10 @@ STRUCTURED_BLOG_TOOL = {
                                     "type": "array",
                                     "items": {
                                         "type": "object",
-                                        "required": ["name", "role", "note"],
+                                        "required": ["name", "role"],
                                         "properties": {
                                             "name": {"type": "string"},
                                             "role": {"type": "string", "description": "e.g. 'Wife & co-traveler', 'Local guide'"},
-                                            "note": {"type": "string", "description": "One warm personal line"},
                                             "image_url": {"type": "string", "default": ""}
                                         }
                                     }

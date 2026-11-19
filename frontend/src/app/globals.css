@@ -136,27 +136,6 @@ body {
 .ProseMirror blockquote p { margin: 0 0 6px; color: inherit !important; }
 .ProseMirror blockquote p:last-child { margin-bottom: 0; }
 
-/* Lists */
-.ProseMirror ul { margin: 16px 0 20px; padding-left: 0; list-style: none; }
-.ProseMirror ul li {
-  padding: 7px 0 7px 24px;
-  position: relative;
-  border-bottom: 1px solid #f1f5f9;
-  font-family: var(--font-lora), Georgia, serif;
-  color: #374151;
-}
-.ProseMirror ul li::before {
-  content: "→";
-  position: absolute;
-  left: 0;
-  color: #0d9488;
-  font-weight: 700;
-  font-family: 'Inter', sans-serif;
-}
-.ProseMirror ul li p { margin: 0; }
-.ProseMirror ol { margin: 16px 0 20px; padding-left: 20px; }
-.ProseMirror ol li { padding: 6px 0; }
-.ProseMirror ol li p { margin: 0; }
 
 /* Inline styles */
 .ProseMirror strong { font-weight: 700 !important; color: #0f172a; }

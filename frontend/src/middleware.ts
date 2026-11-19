@@ -31,8 +31,9 @@ async function isValidToken(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+
   if (pathname.startsWith("/admin")) {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
     if (!token || !(await isValidToken(token))) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname);
@@ -40,9 +41,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Backend API (proxied through /api): admin only, except signing in/out and reading published blogs.
+  if (pathname.startsWith("/api/")) {
+    const isAuth = pathname.startsWith("/api/auth/");
+    const isPublicRead = request.method === "GET" && pathname.startsWith("/api/blogs/published");
+    if (!isAuth && !isPublicRead && (!token || !(await isValidToken(token)))) {
+      return NextResponse.json({ error: "Sign in to the admin to do this." }, { status: 401 });
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/:path*"],
 };
