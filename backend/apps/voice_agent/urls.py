@@ -11,5 +11,6 @@ api_router.add_api_route("/api/voice-agent/session/regenerate", view.regenerate_
 api_router.add_api_route("/api/voice-agent/blog", view.get_blog, methods=["GET"])
 api_router.add_api_route("/api/voice-agent/blog", view.update_blog, methods=["PUT"])
 api_router.add_api_route("/api/voice-agent/blog", view.delete_blog, methods=["DELETE"])
+api_router.add_api_route("/api/voice-agent/blog/publish", view.publish_blog, methods=["POST"])
 api_router.add_api_route("/api/voice-agent/blog/reformat", view.reformat_blog, methods=["POST"])
 api_router.add_api_route("/api/media/upload", view.upload_media, methods=["POST"])

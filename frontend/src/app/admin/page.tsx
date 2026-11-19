@@ -153,6 +153,40 @@ export default function AdminPage() {
     );
   }
 
+  /** Publishes the saved draft. Throws with the server's message so the caller can show it. */
+  const publishDraft = async () => {
+    const res = await fetch("/api/voice-agent/blog/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
+    // The draft slot is free now; the blog shows up under Published.
+    setBlogContent("");
+    setBlogContentFormat("markdown");
+    setBlogSections(null);
+    setBlogSubtitle("");
+    setBlogTitle("");
+    setBlogBannerUrl("");
+    setBlogId("");
+    setBlogUpdatedAt("");
+    setSession(null);
+    setEditing(null);
+    setView("landing");
+    setNotice(`Published at /blog/${data.slug}. Commit and push frontend/content/blogs to put it on the live site.`);
+  };
+
+  const publishFromDashboard = async () => {
+    if (blogContentFormat !== "rich") {
+      setNotice("Open the draft in the editor and save it once, then publish.");
+      return;
+    }
+    if (!window.confirm(`Publish "${blogTitle || "Untitled draft"}"? It moves from Drafts to Published.`)) return;
+    setNotice("Publishing…");
+    try {
+      await publishDraft();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Publish failed");
+    }
+  };
+
   const editDraft = () => {
     setEditing({
       blogId: blogId || "general",
@@ -194,6 +228,7 @@ export default function AdminPage() {
         initialBanner={editing.banner}
         initialHtml={editing.input.html}
         initialSections={editing.input.endSections}
+        onPublish={editing.saveUrl ? undefined : publishDraft}
         onExit={() => {
           setEditing(null);
           setView("landing");
@@ -231,6 +266,7 @@ export default function AdminPage() {
           onContinueInterview={handleContinue}
           onViewDraft={() => setView("blog")}
           onEditDraft={editDraft}
+          onPublishDraft={publishFromDashboard}
           onEditPublished={editPublished}
         />
         {notice && (

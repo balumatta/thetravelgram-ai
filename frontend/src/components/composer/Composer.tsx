@@ -36,6 +36,8 @@ interface Props {
   initialSections: EndSection[];
   onExit: () => void;
   onSaved: (data: ComposerSaved) => void;
+  /** Shown only for the draft: saves pending changes, then publishes. Throws with a message on failure. */
+  onPublish?: () => Promise<void>;
 }
 
 type Style = "p" | "h2" | "h3" | "convo" | "fact" | "quote";
@@ -215,6 +217,7 @@ export default function Composer({
   initialSections,
   onExit,
   onSaved,
+  onPublish,
 }: Props) {
   const [title, setTitle] = useState(initialTitle);
   const [subtitle, setSubtitle] = useState(initialSubtitle);
@@ -223,6 +226,7 @@ export default function Composer({
   const [save, setSave] = useState<SaveState>("clean");
   const [saveError, setSaveError] = useState("");
   const [previewing, setPreviewing] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [previewHtml, setPreviewHtml] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkValue, setLinkValue] = useState("");
@@ -375,8 +379,8 @@ export default function Composer({
 
   const sectionsOut = useMemo(() => fromEndSections(endSections), [endSections]);
 
-  const doSave = useCallback(async () => {
-    if (!editor) return;
+  const doSave = useCallback(async (): Promise<boolean> => {
+    if (!editor) return false;
     const html = editor.getHTML();
     setSave("saving");
     setSaveError("");
@@ -389,9 +393,11 @@ export default function Composer({
       if (!res.ok) throw new Error(`Save failed (${res.status})`);
       setSave("saved");
       onSaved({ title, subtitle, bannerUrl: banner, html, sections: sectionsOut });
+      return true;
     } catch (err) {
       setSave("error");
       setSaveError(err instanceof Error ? err.message : "Save failed");
+      return false;
     }
   }, [editor, title, subtitle, banner, sectionsOut, onSaved, saveUrl]);
 
@@ -413,6 +419,27 @@ export default function Composer({
       window.removeEventListener("beforeunload", onUnload);
     };
   }, [doSave, dirty]);
+
+  const doPublish = async () => {
+    if (!onPublish || publishing) return;
+    if (!title.trim()) {
+      setSave("error");
+      setSaveError("Add a title before publishing");
+      return;
+    }
+    if (!window.confirm(`Publish "${title.trim()}"? It moves from Drafts to Published.`)) return;
+    setPublishing(true);
+    try {
+      // Always save first so what gets published is exactly what's on screen.
+      if (!(await doSave())) return;
+      await onPublish();
+    } catch (err) {
+      setSave("error");
+      setSaveError(err instanceof Error ? err.message : "Publish failed");
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   const exit = () => {
     if (dirty && !window.confirm("You have unsaved changes. Leave without saving?")) return;
@@ -498,9 +525,14 @@ export default function Composer({
             <button type="button" aria-pressed={!previewing} onClick={() => setMode(false)}>Edit</button>
             <button type="button" aria-pressed={previewing} onClick={() => setMode(true)}>Preview</button>
           </div>
-          <button type="button" className="cmp-save" onClick={doSave} disabled={save === "saving"}>
+          <button type="button" className={onPublish ? "cmp-save is-secondary" : "cmp-save"} onClick={doSave} disabled={save === "saving" || publishing}>
             {save === "saving" ? "Saving…" : "Save"}
           </button>
+          {onPublish && (
+            <button type="button" className="cmp-save" onClick={doPublish} disabled={publishing || save === "saving"}>
+              {publishing ? "Publishing…" : "Publish"}
+            </button>
+          )}
         </div>
 
         {!previewing && editor && ui && (

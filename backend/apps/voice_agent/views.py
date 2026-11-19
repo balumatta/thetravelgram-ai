@@ -1,9 +1,11 @@
 import asyncio
 import json
 import logging
+import math
 import os
+import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import Request
 from sse_starlette.sse import EventSourceResponse
@@ -299,6 +301,76 @@ class VoiceAgentView:
             return JSONResponse({"error": str(e)}, status_code=500)
 
         return {"url": f"https://{bucket}.s3.{region}.amazonaws.com/{key}", "filename": filename}
+
+    async def publish_blog(self, request: Request):
+        """Publish the draft: S3 published/<slug>/blog.json + frontend/content/blogs/<slug>.json, then archive the draft."""
+        from fastapi.responses import JSONResponse
+        from apps.blog.published_store import PublishedStore
+        from apps.blog.wix_import import build_highlights
+
+        draft = BlogStore.load()
+        if not draft or not (draft.get("content") or "").strip():
+            return JSONResponse({"error": "There's no draft to publish."}, status_code=404)
+        if draft.get("content_format") != "rich":
+            return JSONResponse({"error": "Open the draft in the editor and save it once before publishing."}, status_code=400)
+        title = (draft.get("title") or "").strip()
+        if not title:
+            return JSONResponse({"error": "Give the blog a title before publishing."}, status_code=400)
+
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        slug = re.sub(r"[^a-z0-9]+", "-", (body.get("slug") or title).lower()).strip("-")
+        if not slug:
+            return JSONResponse({"error": "Couldn't make a URL from the title."}, status_code=400)
+        if await asyncio.to_thread(PublishedStore.get, slug):
+            return JSONResponse({"error": f"A published blog already lives at /blog/{slug}. Change the title and try again."}, status_code=409)
+
+        content = draft["content"]
+        words = len(re.sub(r"<[^>]+>", " ", content).split())
+        try:
+            highlights = await asyncio.to_thread(build_highlights, title, content)
+        except Exception as e:  # highlights are a nice-to-have for the home page; never block publishing
+            logger.warning(f"Highlights skipped for {slug}: {e}")
+            highlights = []
+
+        now = datetime.now(timezone.utc).isoformat()
+        blog = {
+            "id": draft.get("id") or uuid.uuid4().hex[:12],
+            "slug": slug,
+            "status": "published",
+            "title": title,
+            "subtitle": draft.get("subtitle", ""),
+            "excerpt": draft.get("excerpt", ""),
+            "banner_url": draft.get("banner_url", ""),
+            "theme": draft.get("theme", "warm"),
+            "content": content,
+            "content_format": "rich",
+            "sections": draft.get("sections") or [],
+            "minutes_to_read": max(1, math.ceil(words / 200)),
+            "published_at": now,
+            "highlights": highlights,
+            "source": {"type": "composer"},
+            "created_at": draft.get("created_at") or now,
+            "updated_at": now,
+        }
+        try:
+            await asyncio.to_thread(PublishedStore.save, blog)
+        except Exception as e:
+            logger.exception("Publish failed")
+            return JSONResponse({"error": f"Publishing failed: {e}"}, status_code=500)
+
+        # Keep the draft and its finished interview on disk instead of deleting them; the draft slot is now free.
+        # (The interview has to move too, or the admin would show its text as a draft again.)
+        from apps.voice_agent.session import SESSION_FILE
+        archive_dir = os.path.join(BASE_DIR, "sessions", "published")
+        os.makedirs(archive_dir, exist_ok=True)
+        os.replace(os.path.join(BASE_DIR, "sessions", "blog.json"), os.path.join(archive_dir, f"{slug}.json"))
+        session = AgentSession.load()
+        if session and session.state == SessionState.DONE and os.path.isfile(SESSION_FILE):
+            os.replace(SESSION_FILE, os.path.join(archive_dir, f"{slug}.interview.json"))
+        return {"success": True, "slug": slug, "published_at": now}
 
     async def delete_blog(self, request: Request):
         deleted = BlogStore.delete()

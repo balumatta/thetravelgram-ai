@@ -29,6 +29,7 @@ interface Props {
   onContinueInterview: () => void;
   onViewDraft: () => void;
   onEditDraft: () => void;
+  onPublishDraft: () => void;
   onEditPublished: (slug: string) => void;
 }
 
@@ -158,7 +159,8 @@ export default function AdminDashboard(p: Props) {
                     <span className="ad-pill is-draft">Draft</span>
                     <div className="ad-actions">
                       <button type="button" className="ad-btn" onClick={p.onViewDraft}>View</button>
-                      <button type="button" className="ad-btn is-strong" onClick={p.onEditDraft}>Edit</button>
+                      <button type="button" className="ad-btn" onClick={p.onEditDraft}>Edit</button>
+                      <button type="button" className="ad-btn is-strong" onClick={p.onPublishDraft}>Publish</button>
                     </div>
                   </li>
                 )}
