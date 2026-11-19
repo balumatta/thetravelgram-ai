@@ -220,33 +220,11 @@
     }
   ],
   "created_at": "2026-11-15T06:50:14.998051+00:00",
-  "updated_at": "2026-11-15T12:56:17.113746+00:00",
+  "updated_at": "2026-11-19T08:40:59.706840+00:00",
   "excerpt": "\"Mattuuuu, are you excited to visit your favorite country?\" Cutti asked, phone camera already pointed at my face, because annoying me on video is her life's purpose.  I yawned so wide my jaw cracked.  \"Yeeeesss,\" I replied with full joshh and a sleep-deprived expression. Hehe.  We had left Bengaluru",
   "sections": [
     {
       "type": "itinerary",
-      "days": [
-        {
-          "label": "Route",
-          "places": "Christchurch",
-          "title": "",
-          "stops": [
-            {
-              "name": "Christchurch"
-            }
-          ]
-        },
-        {
-          "label": "",
-          "places": "Lake tekapo",
-          "title": "",
-          "stops": [
-            {
-              "name": "Lake tekapo"
-            }
-          ]
-        }
-      ],
       "stops": [
         "Christchurch",
         "Lake tekapo"
@@ -329,42 +307,41 @@
       ]
     },
     {
-      "type": "thanks",
+      "type": "travellers",
       "people": [
         {
           "name": "Pavithra Kala MP (Cutti)",
           "role": "Wife & co-traveler",
-          "note": "Personal videographer who films me only when I look terrible, and the bravest one of us all — she jumped off Kawarau Bridge on her first attempt while I stood on the viewing deck fully convinced the money was gone. Beyond my expectations, always.",
           "image_url": ""
         },
         {
           "name": "Rithesh Katta (Rinku)",
           "role": "Cousin & co-driver",
-          "note": "Manual-reader-in-chief, the guy who took the wheel every single time I was too sleepy, missed his alarm on dolphin day, jumped off a 45ft cliff with no life jacket while I chickened out, and challenged me into Nevis. Blunt replies guaranteed, free of cost.",
           "image_url": ""
         },
         {
           "name": "Harini RR (Farini)",
           "role": "Co-traveler & official food and café scout",
-          "note": "The reason we found Fergburger within 20 minutes of entering Queenstown, the one who asked \"where are the lupins\" in a month with no lupins, and the one who keeps my ambitions in check — \"you wanna be a boat driver in Queenstown, now Wanaka, have some clarity.\"",
           "image_url": ""
         },
         {
           "name": "Nannaiah",
-          "role": "Cutti's friend in Hamilton",
-          "note": "Became all our friend by day 2 of knowing him — planned our entire North Island, introduced us to Zorb, and made the goodbye at Auckland airport much harder than it needed to be.",
+          "role": "Rental office hero",
           "image_url": ""
-        },
+        }
+      ]
+    },
+    {
+      "type": "thanks",
+      "people": [
         {
           "name": "The Britz attendee in Christchurch",
           "role": "Rental office hero",
-          "note": "The man who handed four clueless Indians the keys to a 4-berth motorhome at closing time. You saved our trip, sir.",
           "image_url": ""
         },
         {
           "name": "The cute, polite Kaikoura cop",
           "role": "Law enforcement, kind variety",
-          "note": "For the warning instead of the fine. Still the most pleasant speeding ticket I never got.",
           "image_url": ""
         }
       ]

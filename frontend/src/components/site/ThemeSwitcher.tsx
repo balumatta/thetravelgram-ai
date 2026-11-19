@@ -1,82 +1,69 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
+/** The two site moods. "daytrip" is the default (no attribute on <html>). */
 export const SITE_THEMES = [
-  { id: "journal", name: "Journal", note: "Warm paper, rust, classic serif", swatch: ["#F6F4F1", "#B84C3D", "#1C1819"] },
-  { id: "alpine", name: "Alpine", note: "Cool mist, pine green, crisp", swatch: ["#EEF2EE", "#2E6A56", "#7FA8C9"] },
-  { id: "night", name: "Night Drive", note: "Dark, amber headlights", swatch: ["#131211", "#F0A64A", "#E0604C"] },
-  { id: "postcard", name: "Postcard", note: "Sunny paper, cobalt, bold", swatch: ["#FBF4E6", "#2747B5", "#E5533D"] },
+  { id: "daytrip", name: "Day Trip", attr: null },
+  { id: "night", name: "Night Drive", attr: "night" },
 ] as const;
 
 const KEY = "ttg-site-theme";
 
-/** Floating theme picker, bottom right. Remembers the choice in this browser. */
+function DayIcon() {
+  // Sun on the horizon.
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
+      <path d="M7 17a5 5 0 0 1 10 0" />
+      <path d="M3 17h18M12 6.5V9M5.6 9.6l1.6 1.6M18.4 9.6l-1.6 1.6" />
+    </svg>
+  );
+}
+
+function NightIcon() {
+  // Headlight throwing beams down the road.
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 7.5c-2.8 0-5 2-5 4.5s2.2 4.5 5 4.5c1 0 1.6-2 1.6-4.5S10 7.5 9 7.5Z" />
+      <path d="M14 8.5l6-1.5M14 12h6.5M14 15.5l6 1.5" />
+    </svg>
+  );
+}
+
+/** Header toggle, top right: Day Trip ↔ Night Drive. Remembers the choice in this browser. */
 export default function ThemeSwitcher() {
-  const [theme, setTheme] = useState<string>("journal");
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<string>("daytrip");
 
   useEffect(() => {
-    setTheme(document.documentElement.getAttribute("data-site-theme") || "journal");
+    setTheme(document.documentElement.getAttribute("data-site-theme") === "night" ? "night" : "daytrip");
   }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   const pick = (id: string) => {
     setTheme(id);
-    if (id === "journal") document.documentElement.removeAttribute("data-site-theme");
-    else document.documentElement.setAttribute("data-site-theme", id);
+    if (id === "night") document.documentElement.setAttribute("data-site-theme", "night");
+    else document.documentElement.removeAttribute("data-site-theme");
     try {
       localStorage.setItem(KEY, id);
     } catch {}
   };
 
-  const current = SITE_THEMES.find((t) => t.id === theme) ?? SITE_THEMES[0];
-
   return (
-    <div className="ts" ref={box}>
-      {open && (
-        <div className="ts-panel" role="radiogroup" aria-label="Site theme">
-          <p className="ts-h">Theme</p>
-          {SITE_THEMES.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="radio"
-              aria-checked={t.id === theme}
-              className="ts-opt"
-              onClick={() => pick(t.id)}
-            >
-              <span className="ts-sw" aria-hidden="true">
-                {t.swatch.map((c) => <i key={c} style={{ background: c }} />)}
-              </span>
-              <span className="ts-txt">
-                <b>{t.name}</b>
-                <small>{t.note}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-      <button type="button" className="ts-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <span className="ts-sw" aria-hidden="true">
-          {current.swatch.map((c) => <i key={c} style={{ background: c }} />)}
-        </span>
-        {current.name}
-      </button>
+    <div className="ts" role="radiogroup" aria-label="Site mood">
+      <span className="ts-thumb" data-on={theme} aria-hidden="true" />
+      {SITE_THEMES.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          role="radio"
+          aria-checked={theme === t.id}
+          className="ts-opt"
+          title={t.name}
+          onClick={() => pick(t.id)}
+        >
+          {t.id === "night" ? <NightIcon /> : <DayIcon />}
+          <span className="ts-name">{t.name}</span>
+        </button>
+      ))}
     </div>
   );
 }

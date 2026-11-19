@@ -17,6 +17,7 @@ export default function SiteShell({ children, active }: { children: React.ReactN
             <Link href="/gallery" className={active === "gallery" ? "is-on" : ""}>Gallery</Link>
             <Link href="/#about">About</Link>
           </nav>
+          <ThemeSwitcher />
         </div>
       </header>
       {children}
@@ -39,7 +40,6 @@ export default function SiteShell({ children, active }: { children: React.ReactN
           <span className="sf-copy">© {BRAND.since}–{new Date().getFullYear()} {BRAND.name}</span>
         </div>
       </footer>
-      <ThemeSwitcher />
     </div>
   );
 }
